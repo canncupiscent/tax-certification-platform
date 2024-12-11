@@ -26,12 +26,24 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 
-# Install only production dependencies
-RUN npm install --only=production
+# Create directory for persistent data
+RUN mkdir -p /app/data
+VOLUME /app/data
+
+# Install SQLite for data persistence
+RUN apk add --no-cache sqlite
+
+# Copy database initialization script
+COPY scripts/init-db.sh /app/scripts/init-db.sh
+RUN chmod +x /app/scripts/init-db.sh
 
 # Copy startup script
 COPY scripts/startup.sh /startup.sh
 RUN chmod +x /startup.sh
+
+# Copy version check script
+COPY scripts/version-check.sh /app/scripts/version-check.sh
+RUN chmod +x /app/scripts/version-check.sh
 
 EXPOSE 3000
 
