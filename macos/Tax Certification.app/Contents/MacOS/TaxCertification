@@ -1,0 +1,111 @@
+#!/bin/bash
+
+# Function to show dialog
+show_dialog() {
+    osascript -e "display dialog \"$1\" buttons {\"$2\"} default button \"$2\" with title \"Tax Certification\" with icon $3"
+}
+
+# Function to check Docker
+check_docker() {
+    # Check if Docker is installed
+    if ! command -v docker &> /dev/null; then
+        show_dialog "Docker Desktop is not installed. Would you like to install it now?" "Open Download Page" "caution"
+        open "https://www.docker.com/products/docker-desktop"
+        exit 1
+    fi
+
+    # Check if Docker is running
+    if ! docker info &> /dev/null; then
+        # Try to start Docker
+        open -a Docker
+        
+        # Wait for Docker to start (max 30 seconds)
+        for i in {1..30}; do
+            if docker info &> /dev/null; then
+                break
+            fi
+            sleep 1
+            if [ $i -eq 30 ]; then
+                show_dialog "Could not start Docker. Please start Docker Desktop manually and try again." "OK" "stop"
+                exit 1
+            fi
+        done
+    fi
+}
+
+# Change to script directory
+cd "$(dirname "$0")"
+
+# Check and start Docker
+check_docker
+
+# Create data directory in Application Support
+DATA_DIR="$HOME/Library/Application Support/Tax Certification"
+mkdir -p "$DATA_DIR"
+
+# Pull latest image or use local
+if ! docker pull tax-certification-platform:latest &> /dev/null; then
+    if ! docker images | grep -q tax-certification-platform; then
+        show_dialog "Unable to download application. Please check your internet connection." "OK" "stop"
+        exit 1
+    fi
+fi
+
+# Stop existing container
+docker stop tax-cert-app &> /dev/null
+docker rm tax-cert-app &> /dev/null
+
+# Create volume if it doesn't exist
+docker volume create tax-cert-data &> /dev/null
+
+# Start the container
+if ! docker run --name tax-cert-app -d \
+    -p 3000:3000 \
+    -v tax-cert-data:/app/data \
+    tax-certification-platform; then
+    show_dialog "Failed to start the application. Please try again." "OK" "stop"
+    exit 1
+fi
+
+# Wait a bit for the container to start
+sleep 3
+
+# Check if container is running
+if ! docker ps | grep -q tax-cert-app; then
+    show_dialog "Application failed to start properly." "OK" "stop"
+    exit 1
+fi
+
+# Check for updates
+UPDATE_INFO=$(docker exec tax-cert-app /app/scripts/version-check.sh)
+if echo "$UPDATE_INFO" | grep -q '"updateAvailable": true'; then
+    show_dialog "A new version is available. Would you like to update now?" "Update Later" "note"
+fi
+
+# Open in default browser
+open "http://localhost:3000"
+
+# Create status bar icon
+osascript <<EOF
+tell application "System Events"
+    set isRunning to (exists process "Tax Certification")
+    if isRunning then
+        tell process "Tax Certification"
+            set menuBar to menu bar 1
+            set statusItem to menu bar item 1 of menuBar
+            set statusMenu to menu 1 of statusItem
+        end tell
+    end if
+end tell
+EOF
+
+# Keep the application running
+while true; do
+    sleep 1
+    if ! docker ps | grep -q tax-cert-app; then
+        break
+    fi
+done
+
+# Cleanup on exit
+docker stop tax-cert-app &> /dev/null
