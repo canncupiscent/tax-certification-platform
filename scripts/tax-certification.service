@@ -1,0 +1,17 @@
+[Unit]
+Description=Tax Certification Platform
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+ExecStartPre=-/usr/bin/docker stop tax-cert-app
+ExecStartPre=-/usr/bin/docker rm tax-cert-app
+ExecStartPre=/usr/bin/docker pull tax-certification-platform:latest
+ExecStart=/usr/bin/docker run --name tax-cert-app -p 3000:3000 -v tax-cert-data:/app/data tax-certification-platform
+ExecStop=/usr/bin/docker stop tax-cert-app
+
+[Install]
+WantedBy=multi-user.target
