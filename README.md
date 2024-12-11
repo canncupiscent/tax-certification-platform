@@ -2,6 +2,47 @@
 
 A comprehensive web application for managing FATCA and CRS tax certifications, built with Next.js, React, and Tailwind CSS.
 
+## Quick Start (Standalone Application)
+
+### Prerequisites
+- Docker Desktop installed ([Download here](https://www.docker.com/products/docker-desktop))
+
+### Running the Application
+
+1. **Windows Users:**
+   - Double-click `launch-windows.bat`
+   - The application will open automatically in your default browser
+
+2. **macOS Users:**
+   - Double-click `launch-mac.command`
+   - If needed, make the file executable first:
+     ```bash
+     chmod +x launch-mac.command
+     ```
+   - The application will open automatically in your default browser
+
+3. **Linux Users:**
+   - Double-click `launch-linux.sh` or run in terminal:
+     ```bash
+     ./launch-linux.sh
+     ```
+   - If needed, make the file executable first:
+     ```bash
+     chmod +x launch-linux.sh
+     ```
+   - The application will open automatically in your default browser
+
+The application will be available at [http://localhost:3000](http://localhost:3000)
+
+### Stopping the Application
+
+To stop the application, you can:
+1. Use Docker Desktop to stop the container named `tax-cert-app`
+2. Or run in terminal/command prompt:
+   ```bash
+   docker stop tax-cert-app
+   ```
+
 ## Features
 
 - Dynamic form routing based on US residency status
@@ -13,12 +54,14 @@ A comprehensive web application for managing FATCA and CRS tax certifications, b
 - Mobile-responsive design
 - Accessible UI components
 
-## Prerequisites
+## Development Setup
+
+### Prerequisites
 
 - Node.js 16.x or higher
 - npm 7.x or higher
 
-## Installation
+### Installation
 
 1. Clone the repository:
 ```bash
@@ -80,6 +123,20 @@ src/
     └── globals.css
 ```
 
+## Docker Build (For Developers)
+
+To build the Docker image manually:
+
+```bash
+docker build -t tax-certification-platform .
+```
+
+To run the container manually:
+
+```bash
+docker run -p 3000:3000 tax-certification-platform
+```
+
 ## Component Flow
 
 1. **Status Dashboard**
@@ -110,23 +167,6 @@ src/
    - Confirmation of submission
    - Certification details
    - Download options
-
-## State Management
-
-The application uses React Context for state management through `CertificationContext`. This maintains:
-
-- Current certification status
-- Form data across steps
-- User residency status
-- Certification dates
-
-## Testing Strategy
-
-- Unit tests for all components
-- Context provider testing
-- Form validation testing
-- User interaction testing
-- Routing logic testing
 
 ## Contributing
 
